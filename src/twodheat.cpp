@@ -1,30 +1,16 @@
 #include <cstdlib>
+#include <iostream>
 #include <assert.h>
 #include <math.h>
 
 #include "umfpack.h"
 #include "util.hpp"
+#include "twodheat.h"
 
 #define PERIODIC_BC    1
 #define DIRICHLET_BC   2
-#define IJ(i, j, nx)  (i)*(nx) + j
+#define IJ(i, j, nx)  (i)*(nx) + ( j )
 #define PI  3.141592653589793 
-
-typedef struct {
-  int nx;
-  int ny;
-  double dx;
-  int bc_type;
-  // More grid parameters
-} Grid;
-
-
-typedef struct {
-  double t; // Current time
-  // Grid
-  double * data;
-  Grid * grid;
-} State;
 
 
 typedef struct {
@@ -34,9 +20,7 @@ typedef struct {
 } LaplacianOp;
 
 
-Grid grid;
 LaplacianOp lapl;
-State state;
 
 
 void setup_laplacian(int nx, int ny){
@@ -55,47 +39,56 @@ void setup_laplacian(int nx, int ny){
   Ax = new double[nz];
 
   int offset = 0;
+  int apoffset = 0;
   int val;
   int nonzero;
 
   for (i = 0; i < nx+2; i++) {
     for(j = 0; j < ny+2; j++) {
-      Ap[IJ(i, j, nx + 2)]= offset;
+      Ap[apoffset++]= offset;
 
       if (i == 0 || j==0 || i == nx + 1 || j == ny + 1){
 	// boundary points
-	Ai[offset] = IJ(i,j,nx);
+	Ai[offset] = IJ(i,j,nx + 2);
 	Ax[offset++] = 1.0;
       } else {  
 	// interior points
 	Ai[offset] = IJ(i-1, j, nx +2);
-	Ax[offset++] = 1.0;
+	Ax[offset++] = -1.0;
 
 	Ai[offset] = IJ(i, j-1, nx +2);
-	Ax[offset++] = 1.0;
+	Ax[offset++] = -1.0;
 
 	Ai[offset] = IJ(i, j, nx +2);
-	Ax[offset++] = -4.0;
+	Ax[offset++] = +4.0;
       
 	Ai[offset] = IJ(i, j+1, nx +2);
-	Ax[offset++] = 1.0;
+	Ax[offset++] = -1.0;
 
 	Ai[offset] = IJ(i+1, j, nx +2);
-	Ax[offset++] = 1.0;
+	Ax[offset++] = -1.0;
       }
     }
   }
 
+  Ap[apoffset]= offset;
   lapl.Ap = Ap;
   lapl.Ai = Ai;
   lapl.Ax = Ax;
+  
+}
 
+void destroy_laplacian(){
+  free(lapl.Ap);
+  free(lapl.Ai);
+  free(lapl.Ax);
 }
 
 void fill_boundary(const int bc_type, double* u, int nx, int ny){
   int i;
-  if (bc_type == PERIODIC_BC){
+  switch (bc_type){ 
 
+  case PERIODIC_BC:
     for (i = 0; i < nx; i++) {
       u[IJ(i,0,nx+2)] = u[IJ(i,ny,nx+2)];
       u[IJ(i,ny+1,nx+2)] = u[IJ(i,1,nx+2)];
@@ -105,18 +98,38 @@ void fill_boundary(const int bc_type, double* u, int nx, int ny){
       u[IJ(0,i,nx+2)] = u[IJ(nx, i,nx+2)];
       u[IJ(nx+1,i,nx+2)] = u[IJ(1,i,nx+2)];
     }
+    break;
   }
 }
+
+template<typename Ptr> void print_state(const char* fname,
+					int nx, int ny, Ptr arr){
+  ofstream myfile;
+  myfile.open(fname);
+  
+  int i,j;
+  for (i = 1; i < nx+1; i++) {
+    for (j=1; j < ny+1; j++) {
+      myfile << arr[i * ( nx +2 ) + j] << " ";
+    }
+    myfile << endl;
+  }
+  myfile.close();
+}
+
 
 /* @doc: test for building laplacian operator
  *
  * just runs code. doesn't do any tests.
  */
-int test_build_laplacian_operator()
+int test_setup_laplacian()
 {
-  int nx = 100;
-  int ny = 100;
+  int nx = 10;
+  int ny = 10;
   setup_laplacian(nx, ny);
+
+  // printmatrix(1, (nx+2) * (ny+2)+1, lapl.Ap);
+  // printmatrix(1, (nx+2) * (ny+2), lapl.Ai);
 
   return 0;
 }
@@ -141,7 +154,7 @@ int test_solve_laplace(int n){
 
   for (i = 1; i < nx +1; i++) {
     for (j = 1; j < ny +1; j++) {
-      b[IJ(i,j,nx+2)] = sin(2 * PI / L * (i-1) *dx) * sin(2*PI/L*(j-1)*dy);
+      b[IJ(i,j,nx+2)] = sin(2 * PI / L *3 * (i-1) *dx) * sin(2*PI/L*(j-1)*dy);
     }
   }
 
@@ -172,8 +185,11 @@ int test_solve_laplace(int n){
 
 
   // TODO Output answer to file
-  printmatrix(nx+2, 1, lapl.Ap);
+  // printmatrix(nx+2, ny+2, b);
+  print_state("forcing.txt", nx, ny, b);
+  print_state("solution.txt", nx, ny, x);
   
+  destroy_laplacian();
   return 0;
 }
 

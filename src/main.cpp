@@ -2,6 +2,7 @@
 int main(int argc, char *argv[])
 {
  
-  test_solve_laplace(1000);
+  // test_setup_laplacian();
+  test_solve_laplace(300);
   return 0;
 }
