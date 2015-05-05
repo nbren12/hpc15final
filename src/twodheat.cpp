@@ -1,12 +1,14 @@
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
 #include <assert.h>
+#include <math.h>
 
 #include "umfpack.h"
+#include "util.hpp"
 
 #define PERIODIC_BC    1
 #define DIRICHLET_BC   2
 #define IJ(i, j, nx)  (i)*(nx) + j
+#define PI  3.141592653589793 
 
 typedef struct {
   int nx;
@@ -36,6 +38,7 @@ Grid grid;
 LaplacianOp lapl;
 State state;
 
+
 void setup_laplacian(int nx, int ny){
   int i,j;
 
@@ -47,9 +50,9 @@ void setup_laplacian(int nx, int ny){
   double *Ax;
 
   // Allocate arrays
-  Ap = calloc((nx+2) * (ny+2) + 1, sizeof(int));
-  Ai = calloc(nz, sizeof(int));
-  Ax = calloc(nz, sizeof(double));
+  Ap = new int[(nx+2) * (ny+2) + 1];
+  Ai = new int[nz];
+  Ax = new double[nz];
 
   int offset = 0;
   int val;
@@ -89,6 +92,22 @@ void setup_laplacian(int nx, int ny){
 
 }
 
+void fill_boundary(const int bc_type, double* u, int nx, int ny){
+  int i;
+  if (bc_type == PERIODIC_BC){
+
+    for (i = 0; i < nx; i++) {
+      u[IJ(i,0,nx+2)] = u[IJ(i,ny,nx+2)];
+      u[IJ(i,ny+1,nx+2)] = u[IJ(i,1,nx+2)];
+    }
+
+    for (i = 0; i < ny; i++) {
+      u[IJ(0,i,nx+2)] = u[IJ(nx, i,nx+2)];
+      u[IJ(nx+1,i,nx+2)] = u[IJ(1,i,nx+2)];
+    }
+  }
+}
+
 /* @doc: test for building laplacian operator
  *
  * just runs code. doesn't do any tests.
@@ -103,23 +122,30 @@ int test_build_laplacian_operator()
 }
 
 
-int test_solve_laplace(){
-  int nx = 1000;
-  int ny = 1000;
+int test_solve_laplace(int n){
+  int nx = n;
+  int ny = n;
 
   // steady state
   double * b, *x;
-  b = calloc((nx+2)*(ny+2), sizeof(double));  // right hand side
-  x = calloc((nx+2)*(ny+2), sizeof(double));  // solution
+  b  = new double[(nx+2)*(ny+2)];
+  x  = new double[(nx+2)*(ny+2)];
   int i, j;
 
-  for (i = 0; i < nx; i++) {
-    for (j = 0; j < ny; j++) {
-      b[IJ(i,j,nx)] = 0.0;
-    }
+  const double L = 1.0;
+  int k = 2;
+  int l = 4;
 
+  double dx =  L / nx;
+  double dy =  L / ny;
+
+  for (i = 1; i < nx +1; i++) {
+    for (j = 1; j < ny +1; j++) {
+      b[IJ(i,j,nx+2)] = sin(2 * PI / L * (i-1) *dx) * sin(2*PI/L*(j-1)*dy);
+    }
   }
 
+  fill_boundary(PERIODIC_BC, x, nx, ny);
   
 
 
@@ -137,18 +163,18 @@ int test_solve_laplace(){
   status =  umfpack_di_symbolic(n_row, n_col, lapl.Ap, lapl.Ai,
 				lapl.Ax, &Symbolic, Control, Info);
 
+  assert(status==0);
   status = umfpack_di_numeric(lapl.Ap, lapl.Ai, lapl.Ax,
 			      Symbolic, &Numeric, Control, Info);
 
   status = umfpack_di_solve(UMFPACK_A, lapl.Ap, lapl.Ai, lapl.Ax,
 			    x, b, Numeric, Control, Info);
-  return 0 ;
-}
 
-int main(int argc, char *argv[])
-{
- 
-  test_build_laplacian_operator();
-  test_solve_laplace();
+
+  // TODO Output answer to file
+  printmatrix(nx+2, 1, lapl.Ap);
+  
   return 0;
 }
+
+

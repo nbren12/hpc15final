@@ -1,9 +1,13 @@
 cmake_minimum_required (VERSION 2.6)
-project (final C)
+project (final)
 
-set(SOURCES twodheat.c)
+set(SOURCES twodheat.cpp)
 
 include_directories(/usr/local/include)
-add_executable(twodheat ${SOURCES})
+add_library(twodheat SHARED ${SOURCES})
 target_link_libraries(twodheat umfpack amd cholmod colamd ccolamd camd metis
   suitesparseconfig cblas)
+
+
+add_executable(main main.cpp)
+target_link_libraries(main twodheat)
