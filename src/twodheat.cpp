@@ -4,6 +4,7 @@
 
 #include "util.hpp"
 #include "laplace.h"
+#define OUTPUT_FORMAT "%07d.txt"
 
 using namespace std;
 
@@ -31,12 +32,16 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
 
   char output_filename[100];
   int count=0;
+
+  sprintf(output_filename, OUTPUT_FORMAT, count++);
+  cout << 0* dt << " " << output_filename << endl;
+  print_state(output_filename, n, n, x);
   
   for (it = 1; it < nt+1; it++) {
 
     if (output_interval > 0) {
       if (it%output_interval == 0){
-	sprintf(output_filename, "%d.txt", count++);
+	sprintf(output_filename, OUTPUT_FORMAT, count++);
 	cout << it * dt << " " << output_filename << endl;
 	print_state(output_filename, n, n, x);
       
@@ -50,10 +55,10 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
     }
 
     // backward step
-    backward_solve(x, work, lapl);
+    // backward_solve(x, work, lapl);
   }
 
-  free_solvers(lapl);
+  // free_solvers(lapl);
   free(work);
 }
 
@@ -68,8 +73,7 @@ int test_evolve_heat_equation_2d(){
   const double dy = dx;
 
   // Setup time stepping
-  const double dt_outer = 1.0;
-  const double dt_inner = .1;
+  double dt =dx*dx/2;
 
   // Allocate arrays
   double *x0, *work;
@@ -89,7 +93,7 @@ int test_evolve_heat_equation_2d(){
 
  
   // Solve heat equation
-  evolve_heat_equation_2d(x0, nx, 1.0/nx, 100, .1, 5);
+  evolve_heat_equation_2d(x0, nx, 1.0/nx, 100, dt, 5);
 
   free(x0);
   return 0;
