@@ -8,20 +8,17 @@
 using namespace std;
 
 
-void evolve_heat_equation_2d(double *x, int n, const double tout,
-			     const double dx, const double dt_min,
-			     int output_interval,
+void evolve_heat_equation_2d(double *x, int n, double dx,
+			     int nt, double dt, int output_interval,
 			     double* work){
 
   int i;
 
   // Setup time stepping
-  const int nt = ceil(tout/dt_min);
-  const double dt = tout / nt;
-  const double lambda = dt_min / dx / dx;
+  const double lambda = dt / dx / dx;
 
   cout << "Running heat solver" << endl;
-  cout << "Total time = " << tout << endl;
+  cout << "Total time = " << nt*dt << endl;
   cout << "dt = " << dt << endl;
   cout << "num timesteps = " << nt << endl;
 
@@ -35,11 +32,13 @@ void evolve_heat_equation_2d(double *x, int n, const double tout,
   
   for (it = 1; it < nt+1; it++) {
 
-    if (it%output_interval == 0){
-      sprintf(output_filename, "%d.txt", count++);
-      cout << it * dt << " " << output_filename << endl;
-      print_state(output_filename, n, n, x);
+    if (output_interval > 0) {
+      if (it%output_interval == 0){
+	sprintf(output_filename, "%d.txt", count++);
+	cout << it * dt << " " << output_filename << endl;
+	print_state(output_filename, n, n, x);
       
+      }
     }
     // forward step
     apply_laplacian(work, x);
@@ -70,9 +69,9 @@ int test_evolve_heat_equation_2d(){
   const double dt_inner = .1;
 
   // Allocate arrays
-  double *x0, *x;
+  double *x0, *work;
   x0  = new double[(nx+2)*(ny+2)];
-  x  = new double[(nx+2)*(ny+2)];
+  work  = new double[(nx+2)*(ny+2)];
   int i, j;
 
   // Initialize x0
@@ -88,12 +87,9 @@ int test_evolve_heat_equation_2d(){
 
  
   // Solve heat equation
-  
-  print_state("t0.txt", nx,ny, x0);
-  evolve_heat_equation_2d(x0, nx, dt_outer, dx, dt_inner, 2, x);
-  print_state("t1.txt", nx,ny, x0);
+  evolve_heat_equation_2d(x0, nx, 1.0/nx, 100, .1, 5, work);
 
-  free(x);
+  free(work);
   free(x0);
   return 0;
 }
