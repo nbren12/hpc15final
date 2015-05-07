@@ -1,4 +1,4 @@
-#include "twodheat.h"
+#include "laplace.h"
 int main(int argc, char *argv[])
 {
  

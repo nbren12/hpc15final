@@ -5,3 +5,7 @@ Install umfpack somehow.  On mac, something like
 brew install suite-sparse
 #+END_EXAMPLE
 should work.
+
+* Heat equation solver
+
+Using [[http://en.wikipedia.org/wiki/Crank%E2%80%93Nicolson_method][Crank-Nicolson]] for the time stepping.

@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 project (final)
 
-set(SOURCES twodheat.cpp)
+set(SOURCES laplace.cpp)
 
 include_directories(/usr/local/include)
 add_library(twodheat SHARED ${SOURCES})

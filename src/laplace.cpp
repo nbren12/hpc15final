@@ -6,7 +6,7 @@
 #include "umfpack.h"
 #include "util.hpp"
 
-#include "twodheat.h"
+#include "laplace.h"
 
 #define PERIODIC_BC    1
 #define DIRICHLET_BC   2
