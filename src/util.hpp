@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include "umfpack.h"
 
 #define IJ(i, j, nx)  (i)*(nx) + ( j )
 #define PI  3.141592653589793 

@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <math.h>
 
-#include "umfpack.h"
 #include "util.hpp"
 
 #include "laplace.h"
@@ -12,48 +11,29 @@
 #define DIRICHLET_BC   2
 
 
-typedef struct {
-int * Ai;
-int * Ap;
-double * Ax;
-double * Abackward;
-double lambda;
-int nx;
-int ny;
-int nz;
-int n;
-} LaplacianOp;
-
-
-LaplacianOp lapl;
 
 /*************************************************************
  *          UMFPACK stuff
  *************************************************************/
+// void setup_umfpack(){
+//   // UMFPack stuff
 
-int status;
-void *Symbolic, *Numeric;
-double Info [UMFPACK_INFO], Control [UMFPACK_CONTROL] ;
-
-void setup_umfpack(){
-  // UMFPack stuff
-
-  int n_row = lapl.n;
-  int n_col = n_row;
+//   int n_row = lapl.n;
+//   int n_col = n_row;
   
-  status =  umfpack_di_symbolic(n_row, n_col, lapl.Ap, lapl.Ai,
-				lapl.Ax, &Symbolic, Control, Info);
+//   status =  umfpack_di_symbolic(n_row, n_col, lapl.Ap, lapl.Ai,
+// 				lapl.Ax, &Symbolic, Control, Info);
 
-  status = umfpack_di_numeric(lapl.Ap, lapl.Ai, lapl.Ax,
-			      Symbolic, &Numeric, Control, Info);
+//   status = umfpack_di_numeric(lapl.Ap, lapl.Ai, lapl.Ax,
+// 			      Symbolic, &Numeric, Control, Info);
   
-}
+// }
 
 /*************************************************************
  *          Setup for sparse laplacian
  *************************************************************/
 
-void setup_laplacian(int nx, int ny){
+void setup_laplacian(int nx, int ny, LaplacianOp& lapl){
   int i,j;
 
   // number of non zero entries
@@ -114,14 +94,8 @@ void setup_laplacian(int nx, int ny){
   lapl.nz = nz;
 }
 
-void free_laplacian(){
-  free(lapl.Ap);
-  free(lapl.Ai);
-  free(lapl.Ax);
-  free(lapl.Abackward);
-}
 
-void set_lambda_cn(double lambda){
+void set_lambda_cn(double lambda, LaplacianOp& lapl){
 
 
   int nx = lapl.nx;
@@ -156,14 +130,14 @@ void set_lambda_cn(double lambda){
   
   int status;
   status =  umfpack_di_symbolic(n_row, n_col, lapl.Ap, lapl.Ai,
-				lapl.Abackward, &Symbolic, Control, Info);
+				lapl.Abackward, &lapl.Symbolic, lapl.Control, lapl.Info);
 
   status = umfpack_di_numeric(lapl.Ap, lapl.Ai, lapl.Abackward,
-			      Symbolic, &Numeric, Control, Info);
+			      lapl.Symbolic, &lapl.Numeric, lapl.Control, lapl.Info);
 
 }
 
-void apply_laplacian(double *y, double *x){
+void apply_laplacian(double *y, double *x, LaplacianOp &lapl){
   int i,j;
 
   int nx = lapl.nx;
@@ -197,10 +171,13 @@ void fill_boundary(const int bc_type, double* u, int nx, int ny){
   }
 }
 
-void free_solvers(){
-  umfpack_di_free_numeric(&Numeric);
-  umfpack_di_free_symbolic(&Symbolic);
-  free_laplacian();
+void free_solvers(LaplacianOp & lapl){
+  umfpack_di_free_numeric(&lapl.Numeric);
+  umfpack_di_free_symbolic(&lapl.Symbolic);
+  free(lapl.Ap);
+  free(lapl.Ai);
+  free(lapl.Ax);
+  free(lapl.Abackward);
 }
 
 
@@ -210,32 +187,33 @@ void free_solvers(){
  *          Laplacian Solver
  *************************************************************/
 
-void laplacian_solve(double * Ax, double*x, double *b){
+void laplacian_solve(double * Ax, double*x, double *b, LaplacianOp & lapl){
   
+  int status;
   fill_boundary(PERIODIC_BC, x, lapl.nx, lapl.ny);
   status = umfpack_di_solve(UMFPACK_A, lapl.Ap, lapl.Ai, Ax,
-			    x, b, Numeric, Control, Info);
+			    x, b, lapl.Numeric, lapl.Control, lapl.Info);
 }
 
-void backward_solve(double* x,double*  work){
-  laplacian_solve(lapl.Abackward, x, work);
+void backward_solve(double* x,double*  work, LaplacianOp & lapl){
+  laplacian_solve(lapl.Abackward, x, work, lapl);
 }
 
 /* @doc: test for building laplacian operator
  *
  * just runs code. doesn't do any tests.
  */
-int test_setup_laplacian()
-{
-  int nx = 10;
-  int ny = 10;
-  setup_laplacian(nx, ny);
+// int test_setup_laplacian()
+// {
+//   int nx = 10;
+//   int ny = 10;
+//   setup_laplacian(nx, ny);
 
-  // printmatrix(1, (nx+2) * (ny+2)+1, lapl.Ap);
-  // printmatrix(1, (nx+2) * (ny+2), lapl.Ai);
+//   // printmatrix(1, (nx+2) * (ny+2)+1, lapl.Ap);
+//   // printmatrix(1, (nx+2) * (ny+2), lapl.Ai);
 
-  return 0;
-}
+//   return 0;
+// }
 
 
 // int test_solve_laplace(int n){
