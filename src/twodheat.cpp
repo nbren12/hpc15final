@@ -9,8 +9,7 @@ using namespace std;
 
 
 void evolve_heat_equation_2d(double *x, int n, double dx,
-			     int nt, double dt, int output_interval,
-			     double* work){
+			     int nt, double dt, int output_interval){
 
   int i;
 
@@ -22,8 +21,10 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
   cout << "dt = " << dt << endl;
   cout << "num timesteps = " << nt << endl;
 
+  // Allocate stuff
   setup_laplacian(n,n);
   set_lambda_cn(lambda);
+  double * work = new double[(n+2) * (n+2)];
 
   int it;
 
@@ -52,6 +53,7 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
   }
 
   free_solvers();
+  free(work);
 }
 
 
@@ -71,7 +73,6 @@ int test_evolve_heat_equation_2d(){
   // Allocate arrays
   double *x0, *work;
   x0  = new double[(nx+2)*(ny+2)];
-  work  = new double[(nx+2)*(ny+2)];
   int i, j;
 
   // Initialize x0
@@ -87,9 +88,8 @@ int test_evolve_heat_equation_2d(){
 
  
   // Solve heat equation
-  evolve_heat_equation_2d(x0, nx, 1.0/nx, 100, .1, 5, work);
+  evolve_heat_equation_2d(x0, nx, 1.0/nx, 100, .1, 5);
 
-  free(work);
   free(x0);
   return 0;
 }
