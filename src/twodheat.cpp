@@ -50,12 +50,12 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
     // forward step
     apply_laplacian(work, x, lapl);
     for (i = 0; i < (n+2)*(n+2); i++) {
-      x[i] += work[i]/2.0;
+      x[i] += work[i]*lambda/2.0;
       work[i] = x[i]; // copy back into work array
     }
 
     // backward step
-    // backward_solve(x, work, lapl);
+    backward_solve(x, work, lapl);
   }
 
   // free_solvers(lapl);
@@ -93,7 +93,7 @@ int test_evolve_heat_equation_2d(){
 
  
   // Solve heat equation
-  evolve_heat_equation_2d(x0, nx, 1.0/nx, 100, dt, 5);
+  evolve_heat_equation_2d(x0, nx, 1.0/nx, 1000, dt, 10);
 
   free(x0);
   return 0;

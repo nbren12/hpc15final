@@ -131,7 +131,6 @@ void set_lambda_cn(double lambda, LaplacianOp& lapl){
   int status;
   status =  umfpack_di_symbolic(n_row, n_col, lapl.Ap, lapl.Ai,
 				lapl.Abackward, &lapl.Symbolic, lapl.Control, lapl.Info);
-
   status = umfpack_di_numeric(lapl.Ap, lapl.Ai, lapl.Abackward,
 			      lapl.Symbolic, &lapl.Numeric, lapl.Control, lapl.Info);
 
@@ -144,11 +143,17 @@ void apply_laplacian(double *y, double *x, LaplacianOp &lapl){
   int ny = lapl.ny;
 
   fill_boundary(PERIODIC_BC, x, lapl.nx, lapl.ny);
-  for (i = 1; i < nx+1; i++) {
-    for(j = 1; j < ny+1; j++) {
-      y[IJ(i,j, nx+2)] = -4.0 * x[IJ(i,j,nx+2)] +
+  for (i = 0; i < nx+2; i++) {
+    for(j = 0; j < ny+2; j++) {
+      if (i == 0 || j==0 || i == nx + 1 || j == ny + 1){
+	// boundary points
+	y[IJ(i,j, nx+2)] = x[IJ(i,j, nx+2)];
+      } else {  
+	// interior points
+	y[IJ(i,j, nx+2)] = -4.0 * x[IJ(i,j,nx+2)] +
 	  x[IJ(i-1,j,nx+2)] + x[IJ(i+1,j,nx+2)] +
 	  x[IJ(i,j-1,nx+2)] + x[IJ(i,j+1,nx+2)];
+      }
     }
   }
 }
@@ -158,15 +163,23 @@ void fill_boundary(const int bc_type, double* u, int nx, int ny){
   switch (bc_type){ 
 
   case PERIODIC_BC:
-    for (i = 0; i < nx; i++) {
+
+    for (i = 1; i < nx+1; i++) {
       u[IJ(i,0,nx+2)] = u[IJ(i,ny,nx+2)];
       u[IJ(i,ny+1,nx+2)] = u[IJ(i,1,nx+2)];
     }
 
-    for (i = 0; i < ny; i++) {
+    for (i = 1; i < ny+1; i++) {
       u[IJ(0,i,nx+2)] = u[IJ(nx, i,nx+2)];
       u[IJ(nx+1,i,nx+2)] = u[IJ(1,i,nx+2)];
     }
+
+    //Don't forget corners
+    u[IJ(0,0, nx+2)] = u[IJ(ny, nx, nx+2)];
+    u[IJ(ny+1,nx+1, nx+2)] = u[IJ(1, 1, nx+2)];
+
+    u[IJ(0,nx+1, nx+2)] = u[IJ(ny, 1, nx+2)];
+    u[IJ(ny+1,0, nx+2)] = u[IJ(1, nx, nx+2)];
     break;
   }
 }
