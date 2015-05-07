@@ -13,6 +13,9 @@
 #define IJ(i, j, nx)  (i)*(nx) + ( j )
 #define PI  3.141592653589793 
 
+/*************************************************************
+ *          Setup for sparse laplacian
+ *************************************************************/
 
 typedef struct {
   int * Ai;
@@ -89,7 +92,9 @@ void destroy_laplacian(){
   free(lapl.Ax);
 }
 
-
+/*************************************************************
+ *          UMFPACK stuff
+ *************************************************************/
 
 int status;
 void *Symbolic, *Numeric;
@@ -111,7 +116,8 @@ void setup_solvers(){
 }
 
 void free_solvers(){
-  
+  umfpack_di_free_numeric(&Numeric);
+  umfpack_di_free_symbolic(&Symbolic);
 }
 
 void laplacian_solve(double*x, double *b){
