@@ -92,6 +92,23 @@ void destroy_laplacian(){
   free(lapl.Ax);
 }
 
+void fill_boundary(const int bc_type, double* u, int nx, int ny){
+  int i;
+  switch (bc_type){ 
+
+  case PERIODIC_BC:
+    for (i = 0; i < nx; i++) {
+      u[IJ(i,0,nx+2)] = u[IJ(i,ny,nx+2)];
+      u[IJ(i,ny+1,nx+2)] = u[IJ(i,1,nx+2)];
+    }
+
+    for (i = 0; i < ny; i++) {
+      u[IJ(0,i,nx+2)] = u[IJ(nx, i,nx+2)];
+      u[IJ(nx+1,i,nx+2)] = u[IJ(1,i,nx+2)];
+    }
+    break;
+  }
+}
 /*************************************************************
  *          UMFPACK stuff
  *************************************************************/
@@ -122,29 +139,13 @@ void free_solvers(){
 
 void laplacian_solve(double*x, double *b){
   
+  fill_boundary(PERIODIC_BC, x, lapl.nx, lapl.ny);
   status = umfpack_di_solve(UMFPACK_A, lapl.Ap, lapl.Ai, lapl.Ax,
 			    x, b, Numeric, Control, Info);
 }
 
 
 
-void fill_boundary(const int bc_type, double* u, int nx, int ny){
-  int i;
-  switch (bc_type){ 
-
-  case PERIODIC_BC:
-    for (i = 0; i < nx; i++) {
-      u[IJ(i,0,nx+2)] = u[IJ(i,ny,nx+2)];
-      u[IJ(i,ny+1,nx+2)] = u[IJ(i,1,nx+2)];
-    }
-
-    for (i = 0; i < ny; i++) {
-      u[IJ(0,i,nx+2)] = u[IJ(nx, i,nx+2)];
-      u[IJ(nx+1,i,nx+2)] = u[IJ(1,i,nx+2)];
-    }
-    break;
-  }
-}
 
 template<typename Ptr> void print_state(const char* fname,
 					int nx, int ny, Ptr arr){
@@ -202,7 +203,6 @@ int test_solve_laplace(int n){
     }
   }
 
-  fill_boundary(PERIODIC_BC, x, nx, ny);
  
   setup_laplacian(nx,ny);
   setup_solvers();
