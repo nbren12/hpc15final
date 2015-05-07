@@ -58,8 +58,8 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
     backward_solve(x, work, lapl);
   }
 
-  // free_solvers(lapl);
   free(work);
+  free_solvers(lapl);
 }
 
 
@@ -93,7 +93,7 @@ int test_evolve_heat_equation_2d(){
 
  
   // Solve heat equation
-  evolve_heat_equation_2d(x0, nx, 1.0/nx, 1000, dt, 10);
+  evolve_heat_equation_2d(x0, nx, 1.0/nx, 100, dt, 1);
 
   free(x0);
   return 0;
