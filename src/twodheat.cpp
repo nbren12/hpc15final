@@ -86,7 +86,7 @@ void setup_laplacian(int nx, int ny){
   
 }
 
-void destroy_laplacian(){
+void free_laplacian(){
   free(lapl.Ap);
   free(lapl.Ai);
   free(lapl.Ax);
@@ -117,10 +117,11 @@ int status;
 void *Symbolic, *Numeric;
 double Info [UMFPACK_INFO], Control [UMFPACK_CONTROL] ;
 
-void setup_solvers(){
+void setup_solvers(int nx, int ny){
   // UMFPack stuff
 
-  int nx = lapl.nx;
+  setup_laplacian(nx,ny);
+
   int n_row = (nx+2)*(nx+2);
   int n_col = n_row;
   
@@ -132,17 +133,19 @@ void setup_solvers(){
   
 }
 
-void free_solvers(){
-  umfpack_di_free_numeric(&Numeric);
-  umfpack_di_free_symbolic(&Symbolic);
-}
-
 void laplacian_solve(double*x, double *b){
   
   fill_boundary(PERIODIC_BC, x, lapl.nx, lapl.ny);
   status = umfpack_di_solve(UMFPACK_A, lapl.Ap, lapl.Ai, lapl.Ax,
 			    x, b, Numeric, Control, Info);
 }
+
+void free_solvers(){
+  umfpack_di_free_numeric(&Numeric);
+  umfpack_di_free_symbolic(&Symbolic);
+  free_laplacian();
+}
+
 
 
 
@@ -204,19 +207,15 @@ int test_solve_laplace(int n){
   }
 
  
-  setup_laplacian(nx,ny);
-  setup_solvers();
-
+  setup_solvers(nx, ny);
   laplacian_solve(x,b);
 
 
-  // TODO Output answer to file
-  // printmatrix(nx+2, ny+2, b);
+  // Output file
   print_state("forcing.txt", nx, ny, b);
   print_state("solution.txt", nx, ny, x);
   
   free_solvers();
-  destroy_laplacian();
   return 0;
 }
 
