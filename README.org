@@ -8,4 +8,27 @@ should work.
 
 * Heat equation solver
 
-Using [[http://en.wikipedia.org/wiki/Crank%E2%80%93Nicolson_method][Crank-Nicolson]] for the time stepping.
+** Spatial discretization
+
+The centered difference approximation to the laplacian in two
+dimensions is given by
+\[   L u_{i,j} = \frac{u_{i-1,j} + u_{i+1,j} + u_{i,j-1} + u_{i,
+j-1} - 4 u_{i,j}}{d^2}.
+\]
+
+
+
+** Time stepping
+
+Using [[http://en.wikipedia.org/wiki/Crank%E2%80%93Nicolson_method][Crank-Nicolson]] for the time stepping. If 
+\[ \dot{u} =  Lu, \]
+then the scheme is written as
+\[
+\frac{u^{n+1} - u^{n}}{\Delta t} = \frac{1}{2} \left(
+Lu^{n} + Lu^{n+1} \right).
+ \] 
+Collecting terms, a more practical formula to implement is 
+\[ u^{n+1} = \left( I-\frac{\Delta t}{2} L  \right)^{-1} \left( I+
+\frac{\Delta t}{2} L \right) u^{n}.\]
+
+* 

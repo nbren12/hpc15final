@@ -6,7 +6,7 @@
 
 void evolve_heat_equation_2d(double *x, double *y, int nx,
 			     const double dt_outer, const double dt_inner){
-  // Todo
+  
 }
 
 
@@ -41,6 +41,7 @@ int test_evolve_heat_equation_2d(){
   }
 
  
+  // Solve heat equation
   setup_solvers(nx, ny);
   evolve_heat_equation_2d(x0, x, nx, dt_outer, dt_inner);
   print_state("t0.txt", nx,ny, x0);
