@@ -5,6 +5,7 @@
 
 #include "umfpack.h"
 #include "util.hpp"
+
 #include "twodheat.h"
 
 #define PERIODIC_BC    1
@@ -17,6 +18,8 @@ typedef struct {
   int * Ai;
   int * Ap;
   double * Ax;
+  int nx;
+  int ny;
 } LaplacianOp;
 
 
@@ -75,6 +78,8 @@ void setup_laplacian(int nx, int ny){
   lapl.Ap = Ap;
   lapl.Ai = Ai;
   lapl.Ax = Ax;
+  lapl.nx = nx;
+  lapl.ny = ny;
   
 }
 
@@ -83,6 +88,39 @@ void destroy_laplacian(){
   free(lapl.Ai);
   free(lapl.Ax);
 }
+
+
+
+int status;
+void *Symbolic, *Numeric;
+double Info [UMFPACK_INFO], Control [UMFPACK_CONTROL] ;
+
+void setup_solvers(){
+  // UMFPack stuff
+
+  int nx = lapl.nx;
+  int n_row = (nx+2)*(nx+2);
+  int n_col = n_row;
+  
+  status =  umfpack_di_symbolic(n_row, n_col, lapl.Ap, lapl.Ai,
+				lapl.Ax, &Symbolic, Control, Info);
+
+  status = umfpack_di_numeric(lapl.Ap, lapl.Ai, lapl.Ax,
+			      Symbolic, &Numeric, Control, Info);
+  
+}
+
+void free_solvers(){
+  
+}
+
+void laplacian_solve(double*x, double *b){
+  
+  status = umfpack_di_solve(UMFPACK_A, lapl.Ap, lapl.Ai, lapl.Ax,
+			    x, b, Numeric, Control, Info);
+}
+
+
 
 void fill_boundary(const int bc_type, double* u, int nx, int ny){
   int i;
@@ -159,29 +197,11 @@ int test_solve_laplace(int n){
   }
 
   fill_boundary(PERIODIC_BC, x, nx, ny);
-  
-
-
+ 
   setup_laplacian(nx,ny);
+  setup_solvers();
 
-
-  // UMFPack stuff
-  int status;
-  void *Symbolic, *Numeric;
-  double Info [UMFPACK_INFO], Control [UMFPACK_CONTROL] ;
-
-  int n_row = (nx+2)*(nx+2);
-  int n_col = n_row;
-  
-  status =  umfpack_di_symbolic(n_row, n_col, lapl.Ap, lapl.Ai,
-				lapl.Ax, &Symbolic, Control, Info);
-
-  assert(status==0);
-  status = umfpack_di_numeric(lapl.Ap, lapl.Ai, lapl.Ax,
-			      Symbolic, &Numeric, Control, Info);
-
-  status = umfpack_di_solve(UMFPACK_A, lapl.Ap, lapl.Ai, lapl.Ax,
-			    x, b, Numeric, Control, Info);
+  laplacian_solve(x,b);
 
 
   // TODO Output answer to file
@@ -189,6 +209,7 @@ int test_solve_laplace(int n){
   print_state("forcing.txt", nx, ny, b);
   print_state("solution.txt", nx, ny, x);
   
+  free_solvers();
   destroy_laplacian();
   return 0;
 }
