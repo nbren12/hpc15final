@@ -146,24 +146,6 @@ void free_solvers(){
 
 
 
-
-
-template<typename Ptr> void print_state(const char* fname,
-					int nx, int ny, Ptr arr){
-  ofstream myfile;
-  myfile.open(fname);
-  
-  int i,j;
-  for (i = 1; i < nx+1; i++) {
-    for (j=1; j < ny+1; j++) {
-      myfile << arr[i * ( nx +2 ) + j] << " ";
-    }
-    myfile << endl;
-  }
-  myfile.close();
-}
-
-
 /* @doc: test for building laplacian operator
  *
  * just runs code. doesn't do any tests.
@@ -214,6 +196,8 @@ int test_solve_laplace(int n){
   print_state("solution.txt", nx, ny, x);
   
   free_solvers();
+  free(b);
+  free(x);
   return 0;
 }
 

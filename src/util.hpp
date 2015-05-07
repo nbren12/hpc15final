@@ -22,3 +22,18 @@ template<typename Ptr> void printmatrix(const char *fname,
   }
   myfile.close();
 }
+
+template<typename Ptr> void print_state(const char* fname,
+					int nx, int ny, Ptr arr){
+  ofstream myfile;
+  myfile.open(fname);
+  
+  int i,j;
+  for (i = 1; i < nx+1; i++) {
+    for (j=1; j < ny+1; j++) {
+      myfile << arr[i * ( nx +2 ) + j] << " ";
+    }
+    myfile << endl;
+  }
+  myfile.close();
+}
