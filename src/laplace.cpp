@@ -11,27 +11,54 @@
 #define PERIODIC_BC    1
 #define DIRICHLET_BC   2
 
-/*************************************************************
- *          Setup for sparse laplacian
- *************************************************************/
 
 typedef struct {
-  int * Ai;
-  int * Ap;
-  double * Ax;
-  int nx;
-  int ny;
+int * Ai;
+int * Ap;
+double * Ax;
+double * Abackward;
+double lambda;
+int nx;
+int ny;
+int nz;
+int n;
 } LaplacianOp;
 
 
 LaplacianOp lapl;
 
+/*************************************************************
+ *          UMFPACK stuff
+ *************************************************************/
+
+int status;
+void *Symbolic, *Numeric;
+double Info [UMFPACK_INFO], Control [UMFPACK_CONTROL] ;
+
+void setup_umfpack(){
+  // UMFPack stuff
+
+  int n_row = lapl.n;
+  int n_col = n_row;
+  
+  status =  umfpack_di_symbolic(n_row, n_col, lapl.Ap, lapl.Ai,
+				lapl.Ax, &Symbolic, Control, Info);
+
+  status = umfpack_di_numeric(lapl.Ap, lapl.Ai, lapl.Ax,
+			      Symbolic, &Numeric, Control, Info);
+  
+}
+
+/*************************************************************
+ *          Setup for sparse laplacian
+ *************************************************************/
 
 void setup_laplacian(int nx, int ny){
   int i,j;
 
   // number of non zero entries
   // -4 for the corners
+  int n = (nx+2)*(ny+2);
   int nz = 5 * nx * ny + 2 * ( nx + 2) + 2 * ( ny + 2) - 4;
 
   int *Ap, *Ai;
@@ -41,6 +68,9 @@ void setup_laplacian(int nx, int ny){
   Ap = new int[(nx+2) * (ny+2) + 1];
   Ai = new int[nz];
   Ax = new double[nz];
+
+  // Allocate forward and backward operators
+  lapl.Abackward = new double[lapl.nz];
 
   int offset = 0;
   int apoffset = 0;
@@ -54,23 +84,23 @@ void setup_laplacian(int nx, int ny){
       if (i == 0 || j==0 || i == nx + 1 || j == ny + 1){
 	// boundary points
 	Ai[offset] = IJ(i,j,nx + 2);
-	Ax[offset++] = 1.0;
+	Ax[offset++]           = 1.0;
       } else {  
 	// interior points
 	Ai[offset] = IJ(i-1, j, nx +2);
-	Ax[offset++] = -1.0;
+	Ax[offset++] = 1.0;
 
 	Ai[offset] = IJ(i, j-1, nx +2);
-	Ax[offset++] = -1.0;
+	Ax[offset++] = 1.0;
 
 	Ai[offset] = IJ(i, j, nx +2);
-	Ax[offset++] = +4.0;
+	Ax[offset++] = -4.0;
       
 	Ai[offset] = IJ(i, j+1, nx +2);
-	Ax[offset++] = -1.0;
+	Ax[offset++] = 1.0;
 
 	Ai[offset] = IJ(i+1, j, nx +2);
-	Ax[offset++] = -1.0;
+	Ax[offset++] = 1.0;
       }
     }
   }
@@ -81,13 +111,72 @@ void setup_laplacian(int nx, int ny){
   lapl.Ax = Ax;
   lapl.nx = nx;
   lapl.ny = ny;
-  
+  lapl.nz = nz;
 }
 
 void free_laplacian(){
   free(lapl.Ap);
   free(lapl.Ai);
   free(lapl.Ax);
+  free(lapl.Abackward);
+}
+
+void set_lambda_cn(double lambda){
+
+
+  int nx = lapl.nx;
+  int ny = lapl.ny;
+
+  int offset =0 ;
+  int i,j;
+  for (i = 0; i < nx+2; i++) {
+    for(j = 0; j < ny+2; j++) {
+
+      if (i == 0 || j==0 || i == nx + 1 || j == ny + 1){
+	// boundary points
+	lapl.Abackward[offset++] = 1.0 - lambda/2.0 * 1.0;
+      } else {  
+	// interior points
+	lapl.Abackward[offset++] = - lambda/2.0 * 1.0;
+
+	lapl.Abackward[offset++] = - lambda/2.0 * 1.0;
+
+	lapl.Abackward[offset++] = 1.0 + lambda/2.0 * 4.0;
+      
+	lapl.Abackward[offset++] = - lambda/2.0 * 1.0;
+
+	lapl.Abackward[offset++] = - lambda/2.0 * 1.0;
+      }
+    }
+  }
+
+  // Perform LU  decomposition
+  int n_row = lapl.n;
+  int n_col = n_row;
+  
+  int status;
+  status =  umfpack_di_symbolic(n_row, n_col, lapl.Ap, lapl.Ai,
+				lapl.Abackward, &Symbolic, Control, Info);
+
+  status = umfpack_di_numeric(lapl.Ap, lapl.Ai, lapl.Abackward,
+			      Symbolic, &Numeric, Control, Info);
+
+}
+
+void apply_laplacian(double *y, double *x){
+  int i,j;
+
+  int nx = lapl.nx;
+  int ny = lapl.ny;
+
+  fill_boundary(PERIODIC_BC, x, lapl.nx, lapl.ny);
+  for (i = 1; i < nx+1; i++) {
+    for(j = 1; j < ny+1; j++) {
+      y[IJ(i,j, nx+2)] = -4.0 * x[IJ(i,j,nx+2)] +
+	  x[IJ(i-1,j,nx+2)] + x[IJ(i+1,j,nx+2)] +
+	  x[IJ(i,j-1,nx+2)] + x[IJ(i,j+1,nx+2)];
+    }
+  }
 }
 
 void fill_boundary(const int bc_type, double* u, int nx, int ny){
@@ -107,36 +196,6 @@ void fill_boundary(const int bc_type, double* u, int nx, int ny){
     break;
   }
 }
-/*************************************************************
- *          UMFPACK stuff
- *************************************************************/
-
-int status;
-void *Symbolic, *Numeric;
-double Info [UMFPACK_INFO], Control [UMFPACK_CONTROL] ;
-
-void setup_solvers(int nx, int ny){
-  // UMFPack stuff
-
-  setup_laplacian(nx,ny);
-
-  int n_row = (nx+2)*(nx+2);
-  int n_col = n_row;
-  
-  status =  umfpack_di_symbolic(n_row, n_col, lapl.Ap, lapl.Ai,
-				lapl.Ax, &Symbolic, Control, Info);
-
-  status = umfpack_di_numeric(lapl.Ap, lapl.Ai, lapl.Ax,
-			      Symbolic, &Numeric, Control, Info);
-  
-}
-
-void laplacian_solve(double*x, double *b){
-  
-  fill_boundary(PERIODIC_BC, x, lapl.nx, lapl.ny);
-  status = umfpack_di_solve(UMFPACK_A, lapl.Ap, lapl.Ai, lapl.Ax,
-			    x, b, Numeric, Control, Info);
-}
 
 void free_solvers(){
   umfpack_di_free_numeric(&Numeric);
@@ -145,6 +204,22 @@ void free_solvers(){
 }
 
 
+
+
+/*************************************************************
+ *          Laplacian Solver
+ *************************************************************/
+
+void laplacian_solve(double * Ax, double*x, double *b){
+  
+  fill_boundary(PERIODIC_BC, x, lapl.nx, lapl.ny);
+  status = umfpack_di_solve(UMFPACK_A, lapl.Ap, lapl.Ai, Ax,
+			    x, b, Numeric, Control, Info);
+}
+
+void backward_solve(double* x,double*  work){
+  laplacian_solve(lapl.Abackward, x, work);
+}
 
 /* @doc: test for building laplacian operator
  *
@@ -163,42 +238,43 @@ int test_setup_laplacian()
 }
 
 
-int test_solve_laplace(int n){
-  int nx = n;
-  int ny = n;
+// int test_solve_laplace(int n){
+//   int nx = n;
+//   int ny = n;
 
-  // steady state
-  double * b, *x;
-  b  = new double[(nx+2)*(ny+2)];
-  x  = new double[(nx+2)*(ny+2)];
-  int i, j;
+//   // steady state
+//   double * b, *x;
+//   b  = new double[(nx+2)*(ny+2)];
+//   x  = new double[(nx+2)*(ny+2)];
+//   int i, j;
 
-  const double L = 1.0;
-  int k = 2;
-  int l = 4;
+//   const double L = 1.0;
+//   int k = 2;
+//   int l = 4;
 
-  double dx =  L / nx;
-  double dy =  L / ny;
+//   double dx =  L / nx;
+//   double dy =  L / ny;
 
-  for (i = 1; i < nx +1; i++) {
-    for (j = 1; j < ny +1; j++) {
-      b[IJ(i,j,nx+2)] = sin(2 * PI / L *3 * (i-1) *dx) * sin(2*PI/L*(j-1)*dy);
-    }
-  }
+//   for (i = 1; i < nx +1; i++) {
+//     for (j = 1; j < ny +1; j++) {
+//       b[IJ(i,j,nx+2)] = sin(2 * PI / L *3 * (i-1) *dx) * sin(2*PI/L*(j-1)*dy);
+//     }
+//   }
 
  
-  setup_solvers(nx, ny);
-  laplacian_solve(x,b);
+//   setup_laplacian(nx, ny);
+//   setup_umfpack
+//   laplacian_solve(x,b);
 
 
-  // Output file
-  print_state("forcing.txt", nx, ny, b);
-  print_state("solution.txt", nx, ny, x);
+//   // Output file
+//   print_state("forcing.txt", nx, ny, b);
+//   print_state("solution.txt", nx, ny, x);
   
-  free_solvers();
-  free(b);
-  free(x);
-  return 0;
-}
+//   free_solvers();
+//   free(b);
+//   free(x);
+//   return 0;
+// }
 
 

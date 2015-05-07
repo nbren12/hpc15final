@@ -4,8 +4,28 @@
 #include "laplace.h"
 
 
-void evolve_heat_equation_2d(double *x, double *y, int nx,
-			     const double dt_outer, const double dt_inner){
+
+void evolve_heat_equation_2d(double *x, int n, const double tout,
+			     const double dx, const double dt_min,
+			     double* work){
+
+  int i;
+  double lambda = dt_min / dx / dx;
+
+
+  setup_laplacian(n,n);
+  set_lambda_cn(lambda);
+
+
+  // forward step
+  apply_laplacian(work, x);
+  for (i = 0; i < (n+2)*(n+2); i++) {
+    x[i] += work[i]/2.0;
+    work[i] = x[i]; // copy back into work array
+  }
+
+  // backward step
+  backward_solve(x, work);
   
 }
 
@@ -42,13 +62,14 @@ int test_evolve_heat_equation_2d(){
 
  
   // Solve heat equation
-  setup_solvers(nx, ny);
-  evolve_heat_equation_2d(x0, x, nx, dt_outer, dt_inner);
+  
   print_state("t0.txt", nx,ny, x0);
-  print_state("t1.txt", nx,ny, x);
+  evolve_heat_equation_2d(x0, nx, dt_outer, dx, dt_inner, x);
+  print_state("t1.txt", nx,ny, x0);
 
   free_solvers();
 
   free(x);
   free(x0);
+  return 0;
 }
