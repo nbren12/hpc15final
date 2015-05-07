@@ -10,8 +10,6 @@
 
 #define PERIODIC_BC    1
 #define DIRICHLET_BC   2
-#define IJ(i, j, nx)  (i)*(nx) + ( j )
-#define PI  3.141592653589793 
 
 /*************************************************************
  *          Setup for sparse laplacian
