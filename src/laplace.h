@@ -3,7 +3,7 @@
 extern "C" {
 #endif
 
-typedef struct {
+struct LaplacianOp{
   int * Ai;
   int * Ap;
   double * Ax;
@@ -17,7 +17,12 @@ typedef struct {
   int status;
   void *Symbolic, *Numeric;
   double Info [UMFPACK_INFO], Control [UMFPACK_CONTROL];
-} LaplacianOp;
+  
+  LaplacianOp(int nx, int ny);
+  LaplacianOp(int n) { LaplacianOp(n,n);};
+  void set_lambda(double lambda);
+};
+
 
   int test_solve_laplace(int n);
   int test_setup_laplacian();

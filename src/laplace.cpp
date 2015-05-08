@@ -13,36 +13,16 @@
 
 
 /*************************************************************
- *          UMFPACK stuff
- *************************************************************/
-// void setup_umfpack(){
-//   // UMFPack stuff
-
-//   int n_row = lapl.n;
-//   int n_col = n_row;
-  
-//   status =  umfpack_di_symbolic(n_row, n_col, lapl.Ap, lapl.Ai,
-// 				lapl.Ax, &Symbolic, Control, Info);
-
-//   status = umfpack_di_numeric(lapl.Ap, lapl.Ai, lapl.Ax,
-// 			      Symbolic, &Numeric, Control, Info);
-  
-// }
-
-/*************************************************************
  *          Setup for sparse laplacian
  *************************************************************/
 
-void setup_laplacian(int nx, int ny, LaplacianOp& lapl){
+LaplacianOp::LaplacianOp(int nx, int ny) : nx(nx), ny(ny) {
   int i,j;
 
   // number of non zero entries
   // -4 for the corners
-  int n = (nx+2)*(ny+2);
-  int nz = 5 * nx * ny + 2 * ( nx + 2) + 2 * ( ny + 2) - 4;
-
-  int *Ap, *Ai;
-  double *Ax;
+  n = (nx+2)*(ny+2);
+  nz = 5 * nx * ny + 2 * ( nx + 2) + 2 * ( ny + 2) - 4;
 
   // Allocate arrays
   Ap = new int[(nx+2) * (ny+2) + 1];
@@ -50,7 +30,7 @@ void setup_laplacian(int nx, int ny, LaplacianOp& lapl){
   Ax = new double[nz];
 
   // Allocate forward and backward operators
-  lapl.Abackward = new double[lapl.nz];
+  Abackward = new double[nz];
 
   int offset = 0;
   int apoffset = 0;
@@ -86,14 +66,7 @@ void setup_laplacian(int nx, int ny, LaplacianOp& lapl){
   }
 
   Ap[apoffset]= offset;
-  lapl.Ap = Ap;
-  lapl.Ai = Ai;
-  lapl.Ax = Ax;
-  lapl.nx = nx;
-  lapl.ny = ny;
-  lapl.nz = nz;
 }
-
 
 void set_lambda_cn(double lambda, LaplacianOp& lapl){
 
@@ -186,7 +159,7 @@ void fill_boundary(const int bc_type, double* u, int nx, int ny){
 
 void free_solvers(LaplacianOp & lapl){
   umfpack_di_free_numeric(&lapl.Numeric);
-  umfpack_di_free_symbolic(&lapl.Symbolic);
+  umfpack_di_free_symbolic(&( lapl.Symbolic ));
   free(lapl.Ap);
   free(lapl.Ai);
   free(lapl.Ax);

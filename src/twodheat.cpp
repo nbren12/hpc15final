@@ -23,8 +23,7 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
   cout << "num timesteps = " << nt << endl;
 
   // Allocate stuff
-  LaplacianOp lapl;
-  setup_laplacian(n,n, lapl);
+  LaplacianOp lapl(n);
   set_lambda_cn(lambda, lapl);
   double * work = new double[(n+2) * (n+2)];
 
@@ -93,7 +92,7 @@ int test_evolve_heat_equation_2d(){
 
  
   // Solve heat equation
-  evolve_heat_equation_2d(x0, nx, 1.0/nx, 100, dt, 1);
+  evolve_heat_equation_2d(x0, nx, 1.0/nx, 100, dt, 50);
 
   free(x0);
   return 0;
