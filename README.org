@@ -1,17 +1,14 @@
 * Installation
 
-Install umfpack somehow.  On mac, something like
+Install [[http://arma.sourceforge.net][Armadillo++]] somehow.  On mac, something like
 #+BEGIN_EXAMPLE
-brew install suite-sparse
+brew install brew install homebrew/science/armadillo
 #+END_EXAMPLE
 should work.
 
 #+BEGIN_EXAMPLE
 
 module load cmake
-module load metis
-module load suitesparse
-
 cmake .
 make
 #+END_EXAMPLE

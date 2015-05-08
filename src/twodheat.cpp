@@ -9,58 +9,6 @@
 using namespace std;
 
 
-void evolve_heat_equation_2d(double *x, int n, double dx,
-			     int nt, double dt, int output_interval){
-
-  int i;
-
-  // Setup time stepping
-  const double lambda = dt / dx / dx;
-
-  cout << "Running heat solver" << endl;
-  cout << "Total time = " << nt*dt << endl;
-  cout << "dt = " << dt << endl;
-  cout << "num timesteps = " << nt << endl;
-
-  // Allocate stuff
-  LaplacianOp lapl(n, n);
-  lapl.set_lambda(lambda);
-  double * work = new double[(n+2) * (n+2)];
-
-  int it;
-
-  char output_filename[100];
-  int count=0;
-
-  sprintf(output_filename, OUTPUT_FORMAT, count++);
-  cout << 0* dt << " " << output_filename << endl;
-  print_state(output_filename, n, n, x);
-  
-  for (it = 1; it < nt+1; it++) {
-
-    // forward step
-    lapl.apply_laplacian(work, x);
-    for (i = 0; i < (n+2)*(n+2); i++) {
-      x[i] += work[i]*lambda/2.0;
-      work[i] = x[i]; // copy back into work array
-    }
-
-    // backward step
-    lapl.backward_solve(x, work);
-
-    if (output_interval > 0) {
-      if (it%output_interval == 0){
-	sprintf(output_filename, OUTPUT_FORMAT, count++);
-	cout << it * dt << " " << output_filename << endl;
-	print_state(output_filename, n, n, x);
-      
-      }
-    }
-  }
-
-  free(work);
-}
-
 
 int test_evolve_heat_equation_2d(){
   // Setup grid
@@ -92,8 +40,15 @@ int test_evolve_heat_equation_2d(){
 
  
   // Solve heat equation
-  evolve_heat_equation_2d(x0, nx, 1.0/nx, 100, dt*10, 5);
+  evolve_heat_equation_2d(x0, nx, 1.0/nx, 10, dt*40, 1);
 
   free(x0);
+  return 0;
+}
+
+
+int main(int argc, char *argv[])
+{
+  test_evolve_heat_equation_2d();
   return 0;
 }

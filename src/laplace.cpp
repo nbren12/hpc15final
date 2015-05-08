@@ -1,5 +1,15 @@
-#include "laplace.h"
+#include<iostream>
+#include<armadillo>
+
 #define IJ(i,j,n) (i)*(n)+(j)
+#define FORMAT "output/%07d.txt"
+
+struct LaplaceOp {
+  arma::sp_mat L, I, Afor, Aback;
+
+  LaplaceOp(int n);
+  void set_lambda(double);
+};
 
 
 using namespace arma;
@@ -36,17 +46,81 @@ void LaplaceOp::set_lambda(double lambda){
   Afor  = I + lambda/2.0 * L;
 }
 
+
 void test_laplace_matrix(){
   LaplaceOp lapl(10);
   lapl.set_lambda(1.0);
   lapl.Afor.print();
 }
 
+void periodic_boundary(vec u, int n){
+  int i,j;
+  int m = n -2;
+  
+  for (i = 1; i < n-1; i++)
+    u(IJ(0,i,n)) = u(IJ(m,i,n));
 
-int main(int argc, char *argv[])
-{
-  test_laplace_matrix();
-  return 0;
+  for (i = 1; i < n-1; i++)
+    u(IJ(n-1,i,n)) = u(IJ(1,i,n));
+
+  for (i = 1; i < n-1; i++)
+    u(IJ(i,0,n)) = u(IJ(i,m,n));
+
+  for (i = 1; i < n-1; i++)
+    u(IJ(i,n-1,n)) = u(IJ(i,1,n));
+
+  u(IJ(0,0,n)) = 0.0;
+  u(IJ(m,0,n)) = 0.0;
+  u(IJ(0,m,n)) = 0.0;
+  u(IJ(m,m,n)) = 0.0;
 }
+
+
+template<typename A> void savefile(int count, A & u){
+  // Setup output
+  char filename[100];
+  sprintf(filename, FORMAT, count);
+  u.save(filename, arma_ascii);
+}
+
+void evolve_heat_equation_2d(double *x, int n, double dx,
+			     int nt, double dt, int output_interval){
+
+  // Wrap the array with a armadillo object
+  vec u(x, (n+2) * (n+2), false);
+
+  // Working array
+  vec work(x, (n+2) * (n+2));
+
+  // Setup timestepping
+  double lambda = dt / dx /dx;
+  LaplaceOp lapl(n+2);
+  lapl.set_lambda(lambda);
+
+
+  // Do time stepping
+  int i = 0;
+
+  savefile(i, u);
+  for (i = 1; i < nt + 1; i++) {
+    cout << i<< endl;
+    // Forward step
+    periodic_boundary(u,n+2);
+    work = lapl.Afor * u;
+
+    // Backward step
+    periodic_boundary(work,n+2);
+    u = spsolve(lapl.Aback,work);
+    savefile(i, u);
+
+  }
+}
+
+
+// int main(int argc, char *argv[])
+// {
+//   test_laplace_matrix();
+//   return 0;
+// }
 
 

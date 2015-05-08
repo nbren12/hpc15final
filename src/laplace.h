@@ -1,8 +1,2 @@
-#include<armadillo>
-
-struct LaplaceOp {
-  arma::sp_mat L, I, Afor, Aback;
-
-  LaplaceOp(int n);
-  void set_lambda(double);
-};
+void evolve_heat_equation_2d(double *x, int n, double dx,
+			     int nt, double dt, int output_interval);
