@@ -1,6 +1,8 @@
 #include<iostream>
 #include<armadillo>
 
+#include "laplace.h"
+
 #define IJ(i,j,n) (i)*(n)+(j)
 
 #define TFORMAT "output/times.txt"
