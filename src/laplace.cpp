@@ -107,10 +107,20 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
   // Output times
   int count= 0;
   vec times(nt+1);
-  for (i = 0; i < nt+1; i++) {
-    times(i) = i * dt;
-  }
-  times.save(TFORMAT, arma_ascii);
+
+
+  // Print details of run
+
+  cout << "*******************************************************" << endl;
+  cout << "Running heat equation solver (using Crank-Nicolson):" << endl << endl;
+  cout << "Number of time steps: " << nt << endl;
+  cout << "Number of output  steps: " << nt/output_interval << endl;
+  cout << "Time step size: " << dt << endl;
+  cout << "Number of grid points: " << n << " x " << n << endl;
+  cout << "Length of domain: " << n * dx << endl;
+  cout << "Spatial step size: " << dx << endl;
+  cout << "CFL: " << lambda << endl << endl;
+  cout << "*******************************************************" << endl;
 
   // Do time stepping
   savefile(count++, u);   // Output initial condition
@@ -123,7 +133,12 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
     // Backward step
     periodic_boundary(work,n+2);
     u = spsolve(lapl.Aback,work);
-    if (i % output_interval == 0) savefile(count++, u);
+    if (i % output_interval == 0) {
+     savefile(count, u); 
+     times(count++) = i * dt;
+
+    }
 
   }
+  times.save(TFORMAT, arma_ascii);
 }
