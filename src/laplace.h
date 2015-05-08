@@ -19,8 +19,8 @@ struct LaplacianOp{
   double Info [UMFPACK_INFO], Control [UMFPACK_CONTROL];
   
   LaplacianOp(int nx, int ny);
-  LaplacianOp(int n) { LaplacianOp(n,n);};
   void set_lambda(double lambda);
+  
 };
 
 

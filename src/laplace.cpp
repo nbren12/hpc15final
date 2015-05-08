@@ -68,11 +68,9 @@ LaplacianOp::LaplacianOp(int nx, int ny) : nx(nx), ny(ny) {
   Ap[apoffset]= offset;
 }
 
-void set_lambda_cn(double lambda, LaplacianOp& lapl){
+void LaplacianOp::set_lambda(double lambda){
 
 
-  int nx = lapl.nx;
-  int ny = lapl.ny;
 
   int offset =0 ;
   int i,j;
@@ -81,31 +79,32 @@ void set_lambda_cn(double lambda, LaplacianOp& lapl){
 
       if (i == 0 || j==0 || i == nx + 1 || j == ny + 1){
 	// boundary points
-	lapl.Abackward[offset++] = 1.0 - lambda/2.0 * 1.0;
+	Abackward[offset++] = 1.0 - lambda/2.0 * 1.0;
       } else {  
 	// interior points
-	lapl.Abackward[offset++] = - lambda/2.0 * 1.0;
+	Abackward[offset++] = - lambda/2.0 * 1.0;
 
-	lapl.Abackward[offset++] = - lambda/2.0 * 1.0;
+	Abackward[offset++] = - lambda/2.0 * 1.0;
 
-	lapl.Abackward[offset++] = 1.0 + lambda/2.0 * 4.0;
+	Abackward[offset++] = 1.0 + lambda/2.0 * 4.0;
       
-	lapl.Abackward[offset++] = - lambda/2.0 * 1.0;
+	Abackward[offset++] = - lambda/2.0 * 1.0;
 
-	lapl.Abackward[offset++] = - lambda/2.0 * 1.0;
+	Abackward[offset++] = - lambda/2.0 * 1.0;
       }
     }
   }
 
   // Perform LU  decomposition
-  int n_row = lapl.n;
+  int n_row = n;
   int n_col = n_row;
   
   int status;
-  status =  umfpack_di_symbolic(n_row, n_col, lapl.Ap, lapl.Ai,
-				lapl.Abackward, &lapl.Symbolic, lapl.Control, lapl.Info);
-  status = umfpack_di_numeric(lapl.Ap, lapl.Ai, lapl.Abackward,
-			      lapl.Symbolic, &lapl.Numeric, lapl.Control, lapl.Info);
+  status =  umfpack_di_symbolic(n_row, n_col, Ap, Ai,
+				Abackward, &Symbolic, Control, Info);
+  status = umfpack_di_numeric(Ap, Ai, Abackward,
+			      Symbolic, &Numeric, Control, Info);
+
 
 }
 
