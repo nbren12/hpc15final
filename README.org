@@ -35,7 +35,7 @@ director called =output/= (which needs to be made before execution)
 every =output_interval= time steps. The output format is just a simple
 text file.
 
-You will need to =#include "laplace.h"= and compile with -llaplace for
+You will need to #include "laplace.h" and compile with -llaplace for
 the code to work. See =test_heateq.cpp= for an example.
 
 ** Visualization
