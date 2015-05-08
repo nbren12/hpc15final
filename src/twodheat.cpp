@@ -40,7 +40,7 @@ int test_evolve_heat_equation_2d(){
 
  
   // Solve heat equation
-  evolve_heat_equation_2d(x0, nx, 1.0/nx, 10, dt*40, 1);
+  evolve_heat_equation_2d(x0, nx, 1.0/nx, 10, dt*10, 1);
 
   free(x0);
   return 0;

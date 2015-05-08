@@ -2,6 +2,8 @@
 #include<armadillo>
 
 #define IJ(i,j,n) (i)*(n)+(j)
+
+#define TFORMAT "output/times.txt"
 #define FORMAT "output/%07d.txt"
 
 struct LaplaceOp {
@@ -80,11 +82,14 @@ template<typename A> void savefile(int count, A & u){
   // Setup output
   char filename[100];
   sprintf(filename, FORMAT, count);
+  cout << "Outputting " << filename << endl;
   u.save(filename, arma_ascii);
 }
 
 void evolve_heat_equation_2d(double *x, int n, double dx,
 			     int nt, double dt, int output_interval){
+
+  int i = 0;
 
   // Wrap the array with a armadillo object
   vec u(x, (n+2) * (n+2), false);
@@ -97,13 +102,18 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
   LaplaceOp lapl(n+2);
   lapl.set_lambda(lambda);
 
+  // Output times
+  int count= 0;
+  vec times(nt+1);
+  for (i = 0; i < nt+1; i++) {
+    times(i) = i * dt;
+  }
+  times.save(TFORMAT, arma_ascii);
 
   // Do time stepping
-  int i = 0;
-
-  savefile(i, u);
+  savefile(count++, u);   // Output initial condition
   for (i = 1; i < nt + 1; i++) {
-    cout << i<< endl;
+    cout << "Time = " << i * dt<< endl;
     // Forward step
     periodic_boundary(u,n+2);
     work = lapl.Afor * u;
@@ -111,16 +121,7 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
     // Backward step
     periodic_boundary(work,n+2);
     u = spsolve(lapl.Aback,work);
-    savefile(i, u);
+    if (i % output_interval == 0) savefile(count++, u);
 
   }
 }
-
-
-// int main(int argc, char *argv[])
-// {
-//   test_laplace_matrix();
-//   return 0;
-// }
-
-
