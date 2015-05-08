@@ -12,7 +12,20 @@ module load cmake
 cmake .
 make
 #+END_EXAMPLE
-On nyu hpc, to compile code you need to use
+
+* Usage
+
+The main function provided has the signature
+#+BEGIN_EXAMPLE
+void evolve_heat_equation_2d(double *x, int n, double dx,
+			     int nt, double dt, int output_interval);
+#+END_EXAMPLE
+
+This function takes an array =x= with size =(n+2) * (n+2)= and evolves the
+heat equation forward by =dt*nt=. Text outputs are made into a
+director called =output/= (which needs to be made before execution)
+every =output_interval= time steps.
+
 
 * Heat equation solver
 
