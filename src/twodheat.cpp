@@ -4,7 +4,7 @@
 
 #include "util.hpp"
 #include "laplace.h"
-#define OUTPUT_FORMAT "%07d.txt"
+#define OUTPUT_FORMAT "output/%07d.txt"
 
 using namespace std;
 
