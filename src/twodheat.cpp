@@ -38,14 +38,6 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
   
   for (it = 1; it < nt+1; it++) {
 
-    if (output_interval > 0) {
-      if (it%output_interval == 0){
-	sprintf(output_filename, OUTPUT_FORMAT, count++);
-	cout << it * dt << " " << output_filename << endl;
-	print_state(output_filename, n, n, x);
-      
-      }
-    }
     // forward step
     lapl.apply_laplacian(work, x);
     for (i = 0; i < (n+2)*(n+2); i++) {
@@ -55,6 +47,15 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
 
     // backward step
     lapl.backward_solve(x, work);
+
+    if (output_interval > 0) {
+      if (it%output_interval == 0){
+	sprintf(output_filename, OUTPUT_FORMAT, count++);
+	cout << it * dt << " " << output_filename << endl;
+	print_state(output_filename, n, n, x);
+      
+      }
+    }
   }
 
   free(work);
@@ -91,7 +92,7 @@ int test_evolve_heat_equation_2d(){
 
  
   // Solve heat equation
-  evolve_heat_equation_2d(x0, nx, 1.0/nx, 100, dt, 50);
+  evolve_heat_equation_2d(x0, nx, 1.0/nx, 100, dt*10, 5);
 
   free(x0);
   return 0;

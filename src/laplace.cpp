@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <math.h>
 
+#include <assert.h>
+
 #include "util.hpp"
 
 #include "laplace.h"
@@ -169,11 +171,16 @@ void LaplacianOp::laplacian_solve(double * Ax, double*x, double *b){
   int status;
   fill_boundary(PERIODIC_BC, x, nx, ny);
   status = umfpack_di_solve(UMFPACK_A, Ap, Ai, Ax,
-			    x, b, Numeric, Control, Info);
+			    x, b, Numeric, NULL, NULL);
+  assert(status==UMFPACK_OK);
+  
 }
 
-void LaplacianOp::backward_solve(double* x,double*  work){
-  laplacian_solve(Abackward, x, work);
+void LaplacianOp::backward_solve(double* x,double*  b){
+  fill_boundary(PERIODIC_BC, x, nx, ny);
+  status = umfpack_di_solve(UMFPACK_A, Ap, Ai, Abackward,
+			    x, b, Numeric, NULL, NULL);
+  assert(status==UMFPACK_OK);
 }
 
 
