@@ -40,7 +40,7 @@ the code to work. See =test_heateq.cpp= for an example.
 
 ** Visualization
 
-The ipython notebook =visualization.ipynb= contains a simples example
+The ipython notebook [[http://nbviewer.ipython.org/github/nbren12/hpc15final/blob/master/src/visualization.ipynb][=visualization.ipynb=]]  contains a simple example
 of reading in and visualizing the output.
 
 
