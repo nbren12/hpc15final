@@ -58,7 +58,6 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
   }
 
   free(work);
-  free_solvers(lapl);
 }
 
 

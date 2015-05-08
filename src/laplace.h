@@ -19,6 +19,7 @@ struct LaplacianOp{
   double Info [UMFPACK_INFO], Control [UMFPACK_CONTROL];
   
   LaplacianOp(int nx, int ny);
+  ~LaplacianOp();
   void set_lambda(double lambda);
   void apply_laplacian(double *y, double *x);
   void backward_solve(double* x,double*  work);
@@ -26,12 +27,6 @@ struct LaplacianOp{
   
 };
 
-
-  int test_solve_laplace(int n);
-  int test_setup_laplacian();
-  int test_apply_laplace();
-
-  void free_solvers(LaplacianOp & lapl);
 
   void fill_boundary(const int bc_type, double* u, int nx, int ny);
 #ifdef __cplusplus
