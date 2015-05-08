@@ -20,6 +20,9 @@ struct LaplacianOp{
   
   LaplacianOp(int nx, int ny);
   void set_lambda(double lambda);
+  void apply_laplacian(double *y, double *x);
+  void backward_solve(double* x,double*  work);
+  void laplacian_solve(double * Ax, double*x, double *b);
   
 };
 
@@ -28,10 +31,6 @@ struct LaplacianOp{
   int test_setup_laplacian();
   int test_apply_laplace();
 
-  void setup_laplacian(int nx, int ny, LaplacianOp & lapl);
-  void set_lambda_cn(double lambda, LaplacianOp & lapl);
-  void apply_laplacian(double *y, double *x, LaplacianOp & lapl);
-  void backward_solve(double* x,double*  work, LaplacianOp & lapl);
   void free_solvers(LaplacianOp & lapl);
 
   void fill_boundary(const int bc_type, double* u, int nx, int ny);

@@ -47,14 +47,14 @@ void evolve_heat_equation_2d(double *x, int n, double dx,
       }
     }
     // forward step
-    apply_laplacian(work, x, lapl);
+    lapl.apply_laplacian(work, x);
     for (i = 0; i < (n+2)*(n+2); i++) {
       x[i] += work[i]*lambda/2.0;
       work[i] = x[i]; // copy back into work array
     }
 
     // backward step
-    backward_solve(x, work, lapl);
+    lapl.backward_solve(x, work);
   }
 
   free(work);

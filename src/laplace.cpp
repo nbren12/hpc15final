@@ -108,13 +108,10 @@ void LaplacianOp::set_lambda(double lambda){
 
 }
 
-void apply_laplacian(double *y, double *x, LaplacianOp &lapl){
+void LaplacianOp::apply_laplacian(double *y, double *x){
   int i,j;
 
-  int nx = lapl.nx;
-  int ny = lapl.ny;
-
-  fill_boundary(PERIODIC_BC, x, lapl.nx, lapl.ny);
+  fill_boundary(PERIODIC_BC, x, nx, ny);
   for (i = 0; i < nx+2; i++) {
     for(j = 0; j < ny+2; j++) {
       if (i == 0 || j==0 || i == nx + 1 || j == ny + 1){
@@ -172,16 +169,16 @@ void free_solvers(LaplacianOp & lapl){
  *          Laplacian Solver
  *************************************************************/
 
-void laplacian_solve(double * Ax, double*x, double *b, LaplacianOp & lapl){
+void LaplacianOp::laplacian_solve(double * Ax, double*x, double *b){
   
   int status;
-  fill_boundary(PERIODIC_BC, x, lapl.nx, lapl.ny);
-  status = umfpack_di_solve(UMFPACK_A, lapl.Ap, lapl.Ai, Ax,
-			    x, b, lapl.Numeric, lapl.Control, lapl.Info);
+  fill_boundary(PERIODIC_BC, x, nx, ny);
+  status = umfpack_di_solve(UMFPACK_A, Ap, Ai, Ax,
+			    x, b, Numeric, Control, Info);
 }
 
-void backward_solve(double* x,double*  work, LaplacianOp & lapl){
-  laplacian_solve(lapl.Abackward, x, work, lapl);
+void LaplacianOp::backward_solve(double* x,double*  work){
+  laplacian_solve(Abackward, x, work);
 }
 
 /* @doc: test for building laplacian operator
