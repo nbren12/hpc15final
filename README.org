@@ -6,6 +6,17 @@ brew install suite-sparse
 #+END_EXAMPLE
 should work.
 
+#+BEGIN_EXAMPLE
+
+module load cmake
+module load metis
+module load suitesparse
+
+cmake .
+make
+#+END_EXAMPLE
+On nyu hpc, to compile code you need to use
+
 * Heat equation solver
 
 ** Spatial discretization
@@ -31,4 +42,5 @@ Collecting terms, a more practical formula to implement is
 \[ u^{n+1} = \left( I-\frac{\Delta t}{2} L  \right)^{-1} \left( I+
 \frac{\Delta t}{2} L \right) u^{n}.\]
 
-* 
+
+  
