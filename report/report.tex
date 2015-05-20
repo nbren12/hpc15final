@@ -1,0 +1,92 @@
+\documentclass{article}
+
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+
+\let\cite\citep
+\title{A parallel-in-time solver for the heat equation}
+\author{Noah Brenowitz and Irena Vankova}
+\date{May 18, 2015}
+\begin{document}
+\maketitle
+\section{Introduction}
+\label{sec:intro}
+
+The aim of this project is to test the ``Parallel-in-time'' concept
+on the heat equation 
+\[ u_t = \Delta u \]
+with periodic boundary conditions. 
+The parallel-in-time strategy is distinct from any sort of spatial
+domain decomposition approaches, and we do not implement any spatial
+parallelism in this example. 
+
+For Irena: explain parallel in time concept here
+% Give description of parallel in time approach as described in this paper
+
+\section{Heat equation solver}
+\label{sec:ehat}
+
+The serial implementation of the heat equation solver is relatively
+straightforward. The typical 2 dimensional discrete laplacian is used
+with a implicit trapezoid rule time stepping procedure
+(e.g. Crank-Nicolson). The advantage of the Crank-Nicolson scheme is
+that it is unconditionally stable like the backward Euler scheme, but
+also has second order accuracy.
+
+The solver requires a uniform grid in both
+spatial dimensions. In detail, if the discrete laplacian operator is
+given by
+\[ (L u)_{i,j} = u_{i-1,j} + u_{i+1,j} + u_{i,j-1} + u_{i, j-1} - 4 u_{i,j}, \]
+the time step is $\tau$ and the spatial grid size is $h$. Then the
+implicit trapezoid rule gives
+\[ u^{n+1}  = \frac{\lambda}{2} \left( Lu^n + Lu^{n+1} \right),\]
+where the CFL number $\lambda = \tau / h^{2}$.
+
+In practice, this iteration can be written as a matrix
+multiplication followed by a linear solve in the following way
+\begin{equation}
+  \label{eq:time-step}
+  u^{n+1} = \left( I- \frac{\lambda}{2} L \right)^{-1} \left(I+\frac{\lambda}{2}L \right) u^n.
+\end{equation}
+
+
+\section{Code design}
+\label{sec:code}
+
+The code for this final project is available at \url{https://github.com/nbren12/hpc15final}.
+It consists of two parts:
+\begin{itemize}
+\item The serial heat equation solver provides a library in
+  \verb|./src/| called \verb|liblaplace.a| with a simple function that
+  evolves the heat equation forward in time with a given time
+  step. The signature of this function is
+\begin{lstlisting}
+void evolve_heat_equation_2d(double *x, int n, double dx,
+			     int nt, double dt, int output_interval);
+\end{lstlisting}
+  
+This header provides C-linkage, but the library is written in C++
+using a MATLAB like linear algebra package called
+\href{http://arma.sourceforge.net/}{Armadillo++} for the sparse linear
+solve and matrix multiplications. Armadillo++ is essentially a
+high-level wrapper for libraries like BLAS, SuperLU, and LAPACK. The
+advantage over using MATLAB or numpy is that there is no temporary
+arrays formed with expressions like \verb|a = b + c|.
+
+\item For Irena: explain the ``parallel'' code here.
+
+\end{itemize}
+
+\section{Scalability}
+\label{sec:scale}
+
+For Irena: explain the results here
+
+
+% Bibliography
+\bibliographystyle{authordate1}
+\bibliography{refs}
+\end{document}
