@@ -5,6 +5,8 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{hyperref}
 \usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
 
 \let\cite\citep
 \title{A parallel-in-time solver for the heat equation}
@@ -22,12 +24,7 @@ with periodic boundary conditions.
 The parallel-in-time strategy is distinct from any sort of spatial
 domain decomposition approaches, and we do not implement any spatial
 parallelism in this example. 
-
-For Irena: explain parallel in time concept here
-
-here is the citation \cite{falgout2014parallel}. Are there any others
-you think we need? What about that ``parallel-in-time'' website?
-% Give description of parallel in time approach as described in this paper
+We choose a parallel in time strategy based on \cite{falgout2014parallel}. We solve the equation on two temporal grids, coarse and fine, where the solutions on the fine grid provide initial data for the the next coarse time step. Details are described in Section~\ref{sec:code}.
 
 \section{Heat equation solver}
 \label{sec:ehat}
@@ -79,14 +76,40 @@ high-level wrapper for libraries like BLAS, SuperLU, and LAPACK. The
 advantage over using MATLAB or numpy is that there is no temporary
 arrays formed with expressions like \verb|a = b + c|.
 
-\item For Irena: explain the ``parallel'' code here.
+\item To test the parallel in time idea, we fix special grid and the final time $T$ and choose total number of time steps $nt$. The fine grid time step is $dt = T/nt$. We compute solution on this fine grid by calling evolve\_heat\_equation\_2d and this fulfills the purposed of exact solution $u_{exact}$ for the comparison of time parallel tests. Next we choose a coarse time step $dt_c$, and number of coarse time steps $nt_c$ will equal the number of processors used, $np$. We evolve the equation on the coarse time grid, and we take the coarse grid values as initial values to be evolved independently on a fine grid of length $nt/nt_c$ on each of the $np$ processors. This process is repeated maximum of $np$ times and in each iteration one less processor is used. After each iteration we compute the relative error $E = \sqrt{\frac{\sum{(u_{exact} - u)^2}}{\sum{(u_{exact} )^2}}}$ and we set a tolerance of 10\%, to stop iterating when $E<0.1$. There are time savings when the number of iterations is smaller than number of iterations required converge exactly to the fine grid solution ($np$).
 
 \end{itemize}
 
 \section{Scalability}
 \label{sec:scale}
 
-For Irena: explain the results here
+We ran tests with 640,1280, 2560, 5120 and 10240 total time steps ($nt$) and for 5, 10, 20, 40 and 80 time steps per processor. This together gave us 25 cases to compare. The measure of savings in time we use is the ratio of required iterations to get within the tolerance to $np$, (percentage of time saved). The results are summarized in Figure~\ref{fig:scal} . On the top graph each color represents fixed amount of time steps per processor (coarse block). As we refine the time step ( = increase the number of coarse blocks), the utility of parallelization in time improves. Due to the simplicity of heat equation, at some point the refined solution is as good as the coarse solution (that is what 100\% time saved means). On the lower graph each color represents fixed $nt$. Given that, parallelizing with a higher number of coarse blocks improves the performance in time.
+Figure~\ref{fig:conv} shows that the convergence to the solution on the corresponding fine grid is exponential, for some sample runs.
+
+
+\begin{figure}
+      \begin{center}
+	      \includegraphics[width=16cm]{scalability_test}
+      \end{center}
+\caption{}
+\label{fig:scal}
+\end{figure}  
+
+\begin{figure}
+      \begin{center}
+	      \includegraphics[width=16cm]{convergence}
+      \end{center}
+\caption{}
+\label{fig:conv}
+\end{figure}  
+
+
+\section{Conclusion}
+\label{sec:concl}
+
+Once an algorithm is perfectly spatially parallelized, it may be possible, based on the system of equations, to speed up the computation by parallelizing in time. We tested this idea on heat equation in two dimensions, and obtained good results, which we attribute mainly due to the simplicity of the equation. Although an interesting idea, we found this approach rather wasteful, due to the amount of processors needed for repetitive iterative calculations, in order to achieve significant time savings. This conclusion however maybe a result of personal philosophy rather than anything else.
+
+
 
 
 % Bibliography
